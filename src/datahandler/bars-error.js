@@ -72,7 +72,6 @@ ErrorBarsHandler.prototype.rollingAverage =
   // where there is not enough data to roll over the full number of points
   for (i = 0; i < originalData.length; i++) {
     sum = 0;
-    variance = 0;
     num_ok = 0;
     for (j = Math.max(0, i - rollPeriod + 1); j < i + 1; j++) {
       y = originalData[j][1];
@@ -80,10 +79,17 @@ ErrorBarsHandler.prototype.rollingAverage =
         continue;
       num_ok++;
       sum += y;
-      variance += Math.pow(originalData[j][2][2], 2);
     }
     if (num_ok) {
-      stddev = Math.sqrt(variance) / num_ok;
+      value = sum / num_ok;
+      variance = 0;
+      for (j = Math.max(0, i - rollPeriod + 1); j < i + 1; j++) {
+        y = originalData[j][1];
+        if (y === null || isNaN(y))
+          continue;
+        variance += Math.pow(y-value, 2);
+      }
+      stddev = Math.sqrt(variance / num_ok);
       value = sum / num_ok;
       rollingData[i] = [ originalData[i][0], value,
           [value - sigma * stddev, value + sigma * stddev] ];
